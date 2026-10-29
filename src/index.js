@@ -41,7 +41,7 @@ const QUESTIONS = [
 
 async function telegram(env, method, body) {
   const response = await fetch(
-    `https://api.telegram.org/bot${env.BOT_TOKEN}/${method}`,
+    `https://api.telegram.org/bot${env.TELEGRAM_BOT_TOKEN}/${method}`, 
     {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -171,4 +171,3 @@ export default {
 };
 
 export { QUESTIONS };
-
