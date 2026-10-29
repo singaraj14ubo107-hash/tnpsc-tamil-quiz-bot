@@ -1,4 +1,3 @@
-
 const MENU = {
   keyboard: [
     [{ text: "🎯 கலப்பு தேர்வு (25)", callback_data: "mixed" }],
@@ -42,7 +41,7 @@ const QUESTIONS = [
 
 async function telegram(env, method, body) {
   const response = await fetch(
-    `https://api.telegram.org/bot${env.TELEGRAM_BOT_TOKEN}/${method}`,
+    `https://api.telegram.org/bot${env.BOT_TOKEN}/${method}`,
     {
       method: "POST",
       headers: { "Content-Type": "application/json" },
