@@ -93,22 +93,73 @@ export default {
 
       const choice = update.callback_query.data;
 
-      if (choice === "previous") {
-        await telegram(env, "sendMessage", {
-          chat_id: chatId,
-          text: "சரிபார்க்கப்பட்ட முந்தைய ஆண்டு வினாக்கள் இன்னும் சேர்க்கப்படவில்லை. பயிற்சி வினாக்களை அதிகாரப்பூர்வ வினாக்களாகக் காட்டமாட்டோம்."
-        });
-      } else if (choice === "mixed" ||
-                 choice === "daily" ||
-                 choice === "study") {
-        const list = [...QUESTIONS]
-          .sort(() => Math.random() - 0.5)
-          .slice(0, choice === "daily" ? 10 : 25);
+      
+      if (choice.startsWith("ans|")) {
+        const [, idxText, scoreText, selectedText, totalText] =
+          choice.split("|");
+        const idx = Number(idxText);
+        const score = Number(scoreText);
+        const selected = Number(selectedText);
+        const total = Number(totalText);
+        const q = QUESTIONS[idx];
 
-        const first = list[0];
+        if (!q || idx >= total) return new Response("OK");
+
+        const correct = selected === q.a;
+        const newScore = score + (correct ? 1 : 0);
+
         await telegram(env, "sendMessage", {
           chat_id: chatId,
-          text: `${choice === "study" ? "📖 படிப்பு முறை" : "🎯 பயிற்சி"}\n\n${first.s}\n${first.q}\n\n${first.o.map((v,i)=>`${"ABCD"[i]}. ${v}`).join("\n")}\n\nஇந்த ஆரம்ப பதிப்பில் timer, மதிப்பெண் சேமிப்பு மற்றும் தானியங்கி அடுத்த கேள்வி இன்னும் இணைக்கப்படவில்லை.`
+          text:
+            `${correct ? "✅ சரியான பதில்!" : "❌ தவறான பதில்!"}\n\n` +
+            `சரியான பதில்: ${"ABCD"[q.a]}. ${q.o[q.a]}\n` +
+            `📖 விளக்கம்: ${q.e}\n` +
+            `📊 மதிப்பெண்: ${newScore}/${idx + 1}`
+        });
+
+        if (idx + 1 < total) {
+          const next = QUESTIONS[idx + 1];
+          await telegram(env, "sendMessage", {
+            chat_id: chatId,
+            text: `வினா ${idx + 2}/${total}\n\n${next.s}\n${next.q}`,
+            reply_markup: {
+              inline_keyboard: next.o.map((v, i) => [{
+                text: `${"ABCD"[i]}. ${v}`,
+                callback_data:
+                  `ans|${idx + 1}|${newScore}|${i}|${total}`
+              }])
+            }
+          });
+        } else {
+          await telegram(env, "sendMessage", {
+            chat_id: chatId,
+            text: `🏁 தேர்வு முடிந்தது!\n\nமதிப்பெண்: ${newScore}/${total}`
+          });
+        }
+      } else if (
+        choice === "mixed" ||
+        choice === "daily" ||
+        choice === "study"
+      ) {
+        const total = choice === "daily" ? 10 : 25;
+        const first = QUESTIONS[0];
+
+        await telegram(env, "sendMessage", {
+          chat_id: chatId,
+          text: `🎯 தேர்வு தொடங்குகிறது!\n\nவினா 1/${total}\n\n${first.s}\n${first.q}`,
+          reply_markup: {
+            inline_keyboard: first.o.map((v, i) => [{
+              text: `${"ABCD"[i]}. ${v}`,
+              callback_data: `ans|0|0|${i}|${total}`
+            }])
+          }
+        });
+      } else if (choice === "home") {
+        await telegram(env, "sendMessage", menu(chatId));
+      } else if (choice === "previous") {
+        await telegram(env, "sendMessage", {
+          chat_id: chatId,
+          text: "சரிபார்க்கப்பட்ட முந்தைய ஆண்டு வினாக்கள் இன்னும் சேர்க்கப்படவில்லை."
         });
       } else {
         await telegram(env, "sendMessage", {
@@ -116,6 +167,7 @@ export default {
           text: "இந்த வசதி அடுத்த கட்டத்தில் இணைக்கப்படும்."
         });
       }
+
     }
 
     return new Response("OK");
