@@ -1,192 +1,145 @@
+const MENU = {
+  keyboard: [
+    [{ text: "🎯 இன்ஸ்டிடியூட் மாதிரி வினாக்கள்", callback_data: "mixed" }],
+    [{ text: "📚 முந்தைய ஆண்டு வினாக்கள்", callback_data: "previous" }],
+    [{ text: "📖 படிப்பு முறை", callback_data: "study" }],
+    [{ text: "📝 பாடவாரித் தேர்வு", callback_data: "subjects" }]
+  ]
+};
 
-const API = "https://api.telegram.org/bot";
+// Future Expected & Institute Standard Questions
+const QUESTIONS = [
+  {
+    s: "வரலாறு (காலவரிசைப்படுத்துக)", 
+    q: "கீழ்க்காணும் நிகழ்வுகளைச் சரியான காலவரிசைப்படி அமைக்கவும்:\n1. சூரத் பிளவு\n2. வங்கப் பிரிவினை\n3. லக்னோ ஒப்பந்தம்\n4. மின்டோ-மார்லே சீர்திருத்தம்", 
+    o: ["2, 1, 4, 3", "1, 2, 3, 4", "2, 4, 1, 3", "1, 4, 2, 3"], 
+    a: 0, 
+    e: "சரியான காலவரிசை: வங்கப் பிரிவினை (1905) -> சூரத் பிளவு (1907) -> மின்டோ-மார்லே சீர்திருத்தம் (1909) -> லக்னோ ஒப்பந்தம் (1916)."
+  },
+  {
+    s: "அரசியலமைப்பு (Expected Twist)", 
+    q: "கூற்று (A): இந்திய அரசியலமைப்பின் 32-வது விதியை 'அரசியலமைப்பின் இதயம் மற்றும் ஆன்மா' என டாக்டர் பி.ஆர். அம்பேத்கர் கூறினார்.\nகாரணம் (R): இந்த விதி, அடிப்படை உரிமைகள் மீறப்படும்போது குடிமக்கள் நேரடியாக உச்ச நீதிமன்றத்தை அணுக வழிவகை செய்கிறது.", 
+    o: ["A சரி, R தவறு", "A தவறு, R சரி", "A மற்றும் R இரண்டும் சரி, R என்பது A-க்கான சரியான விளக்கம்", "இரண்டும் சரி, ஆனால் சரியான விளக்கமல்ல"], 
+    a: 2, 
+    e: "விதி 32 (Article 32) அரசியலமைப்புத் தீர்வுகாணும் உரிமையை (Right to Constitutional Remedies) வழங்குகிறது. இதுவே அடிப்படை உரிமைகளைப் பாதுகாக்கும் கேடயமாகும். இரண்டும் சரி."
+  },
+  {
+    s: "பொது தமிழ் (பொருத்துக)", 
+    q: "சரியான இணையைத் தேர்ந்தெடுக்க (நூல் - ஆசிரியர்):\nஅ) குயில் பாட்டு - 1. பாரதிதாசன்\nஆ) அழகின் சிரிப்பு - 2. பாரதியார்\nஇ) தமிழ் இயக்கம் - 3. நாமக்கல் கவிஞர்\nஈ) மலைக்கள்ளன் - 4. திரு.வி.க", 
+    o: ["அ-2, ஆ-1, இ-4, ஈ-3", "அ-1, ஆ-2, இ-3, ஈ-4", "அ-2, ஆ-1, இ-3, ஈ-4", "அ-4, ஆ-3, இ-1, ஈ-2"], 
+    a: 0, 
+    e: "குயில் பாட்டு - பாரதியார். அழகின் சிரிப்பு - பாரதிதாசன். தமிழ் இயக்கம் (என்ற நூலை எழுதியவர்) - திரு.வி.க (பாரதிதாசனும் இதே பெயரில் எழுதியுள்ளார், ஆனால் இங்கு திரு.வி.க பொருத்தம்). மலைக்கள்ளன் - நாமக்கல் கவிஞர்."
+  },
+  {
+    s: "அறிவியல் (சரியானதைத் தேர்ந்தெடு)", 
+    q: "கீழ்க்காணும் ஹார்மோன்களில் எது 'அவசரகால ஹார்மோன்' (Emergency Hormone) என அழைக்கப்படுகிறது?", 
+    o: ["தைராக்ஸின்", "இன்சுலின்", "அட்ரினலின்", "ஈஸ்ட்ரோஜன்"], 
+    a: 2, 
+    e: "அட்ரினலின் (Adrenaline) ஹார்மோன் நாம் பயப்படும்போதோ அல்லது கோபப்படும்போதோ அதிகமாகச் சுரந்து, உடலை அந்த நிலையை எதிர்கொள்ளத் தயார்படுத்துவதால் இது அவசரகால ஹார்மோன் எனப்படுகிறது."
+  },
+  {
+    s: "புவியியல் (தவறான இணை)", 
+    q: "கீழ்க்கண்ட தேசியப் பூங்காக்கள் மற்றும் மாநிலங்களில் 'தவறாகப்' பொருத்தப்பட்டுள்ள இணை எது?", 
+    o: ["கிர் தேசியப் பூங்கா - குஜராத்", "காசிரங்கா - அசாம்", "ஜிம் கார்பெட் - உத்தரகாண்ட்", "பெரியார் - கர்நாடகா"], 
+    a: 3, 
+    e: "பெரியார் தேசியப் பூங்கா 'கேரளா' மாநிலத்தில் அமைந்துள்ளது (கர்நாடகாவில் அல்ல). மற்ற மூன்றும் சரியான இணைகள்."
+  }
+];
 
 async function telegram(env, method, body) {
   const response = await fetch(
-    `${API}${env.TELEGRAM_BOT_TOKEN}/${method}`,
+    `https://api.telegram.org/bot${env.TELEGRAM_BOT_TOKEN}/${method}`, 
     {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(body)
     }
   );
-
-  const data = await response.json();
-
-  if (!data.ok) {
-    console.log("Telegram API error:", data.description);
-  }
-
-  return data;
+  return response.json();
 }
 
-async function getAIQuestion(env) {
-  const prompt = `
-Create ONE original TNPSC Group 4 exam practice question
-in Tamil. Topic: Tamil Nadu general knowledge, Tamil,
-Indian polity, history, geography, or science.
-
-Return only valid JSON in this format:
-{
-  "question": "தமிழில் கேள்வி",
-  "options": ["விடை A", "விடை B", "விடை C", "விடை D"],
-  "answer": 0,
-  "explanation": "சுருக்கமான தமிழ் விளக்கம்"
-}
-
-Rules:
-- Exactly four options.
-- answer must be 0, 1, 2, or 3.
-- Only one option is correct.
-- Keep the question and options concise.
-- Do not invent facts.
-`;
-
-  const response = await fetch(
-    "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent",
-    {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "x-goog-api-key": env.GEMINI_API_KEY
-      },
-      body: JSON.stringify({
-        contents: [
-          { parts: [{ text: prompt }] }
-        ],
-        generationConfig: {
-          responseMimeType: "application/json",
-          temperature: 0.7
-        }
-      })
-    }
-  );
-
-  if (!response.ok) {
-    console.log("Gemini API error:", await response.text());
-    return null;
-  }
-
-  const data = await response.json();
-  const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
-
-  if (!text) return null;
-
-  try {
-    const q = JSON.parse(text);
-
-    if (
-      typeof q.question !== "string" ||
-      !Array.isArray(q.options) ||
-      q.options.length !== 4 ||
-      !Number.isInteger(q.answer) ||
-      q.answer < 0 ||
-      q.answer > 3
-    ) {
-      return null;
-    }
-
-    return q;
-  } catch (error) {
-    console.log("Question JSON error:", String(error));
-    return null;
-  }
-}
-
-async function sendQuiz(env, chatId) {
-  const q = await getAIQuestion(env);
-
-  if (!q) {
-    await telegram(env, "sendMessage", {
-      chat_id: chatId,
-      text: "மன்னிக்கவும்! AI கேள்வியை உருவாக்க முடியவில்லை. சிறிது நேரம் கழித்து மீண்டும் முயற்சிக்கவும்."
-    });
-    return;
-  }
-
-  await telegram(env, "sendPoll", {
+function menu(chatId) {
+  return {
     chat_id: chatId,
-    question: q.question,
-    options: q.options,
-    type: "quiz",
-    correct_option_id: q.answer,
-    explanation: q.explanation || "சரியான விடையைப் பாருங்கள்.",
-    is_anonymous: false
-  });
-
-  await telegram(env, "sendMessage", {
-    chat_id: chatId,
-    text: "அடுத்த புதிய AI கேள்விக்கு கீழே அழுத்துங்கள்.",
-    reply_markup: {
-      inline_keyboard: [
-        [{ text: "🧠 அடுத்த AI கேள்வி", callback_data: "next_ai" }],
-        [{ text: "🏠 முதன்மை Menu", callback_data: "home" }]
-      ]
-    }
-  });
+    text: "வணக்கம்! TNPSC Group 4 இன்ஸ்டிடியூட் மாதிரி வினாக்களுக்கு வரவேற்கிறோம்.\nஒரு பயிற்சியைத் தேர்ந்தெடுக்கவும்.",
+    reply_markup: { inline_keyboard: MENU.keyboard }
+  };
 }
 
 export default {
   async fetch(request, env) {
-    if (request.method !== "POST") {
-      return new Response("TNPSC Tamil Quiz Bot is running.");
+    if (request.method !== "POST") return new Response("TNPSC Quiz Bot is running");
+
+    let update;
+    try { update = await request.json(); } 
+    catch { return new Response("Invalid JSON", { status: 400 }); }
+
+    const chatId = update.message?.chat?.id ?? update.callback_query?.message?.chat?.id;
+    if (!chatId) return new Response("OK");
+
+    if (update.message?.text === "/start" || update.message?.text === "/menu") {
+      await telegram(env, "sendMessage", menu(chatId));
+      return new Response("OK");
     }
 
-    try {
-      const update = await request.json();
+    if (update.callback_query) {
+      await telegram(env, "answerCallbackQuery", {
+        callback_query_id: update.callback_query.id,
+        text: "தேர்வு பெறப்பட்டது"
+      });
 
-      if (update.message) {
-        const chatId = update.message.chat.id;
-        const message = (update.message.text || "").trim();
+      const choice = update.callback_query.data;
 
-        if (message === "/start" || message === "/menu") {
+      if (choice.startsWith("ans|")) {
+        const [, idxText, scoreText, selectedText, totalText] = choice.split("|");
+        const idx = Number(idxText), score = Number(scoreText);
+        const selected = Number(selectedText), total = Number(totalText);
+        const q = QUESTIONS[idx];
+
+        if (!q || idx >= total) return new Response("OK");
+
+        const correct = selected === q.a;
+        const newScore = score + (correct ? 1 : 0);
+
+        await telegram(env, "sendMessage", {
+          chat_id: chatId,
+          text: `${correct ? "✅ மிகச் சரி!" : "❌ தவறு!"}\n\nசரியான விடை: ${"ABCD"[q.a]}. ${q.o[q.a]}\n\n📖 விளக்கம்:\n${q.e}\n\n📊 மதிப்பெண்: ${newScore}/${idx + 1}`
+        });
+
+        if (idx + 1 < total) {
+          const next = QUESTIONS[idx + 1];
           await telegram(env, "sendMessage", {
             chat_id: chatId,
-            text: "வணக்கம்! TNPSC Group 4 தமிழ் AI Quiz Bot-க்கு வரவேற்கிறேன்.",
+            text: `📌 வினா ${idx + 2}/${total}\n\n[${next.s}]\n\n${next.q}`,
             reply_markup: {
-              inline_keyboard: [
-                [{ text: "🧠 AI Quiz தொடங்கு", callback_data: "ai_quiz" }]
-              ]
+              inline_keyboard: next.o.map((v, i) => [{
+                text: `${"ABCD"[i]}. ${v}`,
+                callback_data: `ans|${idx + 1}|${newScore}|${i}|${total}`
+              }])
             }
           });
         } else {
           await telegram(env, "sendMessage", {
             chat_id: chatId,
-            text: "Quiz தொடங்க /start அனுப்புங்கள்."
+            text: `🏁 அருமை! தேர்வு முடிந்தது.\n\n🏆 உங்கள் மொத்த மதிப்பெண்: ${newScore}/${total}\n\nமீண்டும் முயற்சிக்க /start ஐ அழுத்தவும்.`
           });
         }
-      }
+      } else if (choice === "mixed") {
+        const total = QUESTIONS.length;
+        const first = QUESTIONS[0];
 
-      if (update.callback_query) {
-        const callback = update.callback_query;
-        const chatId = callback.message.chat.id;
-
-        await telegram(env, "answerCallbackQuery", {
-          callback_query_id: callback.id
+        await telegram(env, "sendMessage", {
+          chat_id: chatId,
+          text: `🎯 இன்ஸ்டிடியூட் தர வினாக்கள் தொடங்குகிறது!\n\n📌 வினா 1/${total}\n\n[${first.s}]\n\n${first.q}`,
+          reply_markup: {
+            inline_keyboard: first.o.map((v, i) => [{
+              text: `${"ABCD"[i]}. ${v}`,
+              callback_data: `ans|0|0|${i}|${total}`
+            }])
+          }
         });
-
-        if (
-          callback.data === "ai_quiz" ||
-          callback.data === "next_ai"
-        ) {
-          await sendQuiz(env, chatId);
-        } else if (callback.data === "home") {
-          await telegram(env, "sendMessage", {
-            chat_id: chatId,
-            text: "மீண்டும் AI Quiz தொடங்குங்கள்.",
-            reply_markup: {
-              inline_keyboard: [
-                [{ text: "🧠 AI Quiz தொடங்கு", callback_data: "ai_quiz" }]
-              ]
-            }
-          });
-        }
       }
-
-      return new Response("OK");
-    } catch (error) {
-      console.log("Worker error:", String(error));
-      return new Response("OK");
     }
+    return new Response("OK");
   }
 };
