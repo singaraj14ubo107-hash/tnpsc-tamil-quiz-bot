@@ -1,347 +1,340 @@
 
 const active = new Map();
+const profiles = new Map();
 
 const SUBJECTS = {
   tamil: "தமிழ்",
   history: "வரலாறு",
-  polity: "இந்திய அரசியலமைப்பு",
+  polity: "அரசியலமைப்பு",
   geography: "புவியியல்",
-  science: "பொது அறிவியல்",
+  science: "அறிவியல்",
   economy: "பொருளாதாரம்",
   current: "நடப்பு நிகழ்வுகள்",
-  maths: "திறனறிவு மற்றும் கணிதம்"
+  maths: "திறனறிவு / கணிதம்"
 };
 
 const QUESTIONS = [
-  // தமிழ்
-  {s:"tamil",q:"திருக்குறளில் மொத்தம் எத்தனை குறள்கள் உள்ளன?",o:["1330","1300","1200","1335"],a:0,e:"திருக்குறளில் 133 அதிகாரங்கள்; ஒவ்வொரு அதிகாரத்திலும் 10 குறள்கள் உள்ளன."},
-  {s:"tamil",q:"திருக்குறளில் உள்ள அதிகாரங்களின் எண்ணிக்கை என்ன?",o:["100","108","133","150"],a:2,e:"திருக்குறளில் 133 அதிகாரங்கள் உள்ளன."},
-  {s:"tamil",q:"தொல்காப்பியத்தின் மூன்று அதிகாரப் பிரிவுகள் எவை?",o:["அறம், பொருள், இன்பம்","எழுத்து, சொல், பொருள்","இயல், இசை, நாடகம்","அகம், புறம், பக்தி"],a:1,e:"தொல்காப்பியம் எழுத்ததிகாரம், சொல்லதிகாரம், பொருளதிகாரம் எனப் பிரிக்கப்பட்டுள்ளது."},
-  {s:"tamil",q:"சிலப்பதிகாரத்தின் ஆசிரியர் யார்?",o:["சீத்தலைச் சாத்தனார்","கம்பர்","இளங்கோ அடிகள்","திருத்தக்கதேவர்"],a:2,e:"சிலப்பதிகாரத்தை இயற்றியவர் இளங்கோ அடிகள்."},
-  {s:"tamil",q:"மணிமேகலையின் ஆசிரியர் யார்?",o:["இளங்கோ அடிகள்","சீத்தலைச் சாத்தனார்","கம்பர்","ஔவையார்"],a:1,e:"மணிமேகலையின் ஆசிரியர் சீத்தலைச் சாத்தனார்."},
+  {s:"tamil",q:"திருக்குறளில் எத்தனை குறள்கள் உள்ளன?",o:["1330","1300","1200","1335"],a:0,e:"திருக்குறளில் 1330 குறள்கள் உள்ளன."},
+  {s:"tamil",q:"திருக்குறளில் எத்தனை அதிகாரங்கள் உள்ளன?",o:["100","108","133","150"],a:2,e:"திருக்குறளில் 133 அதிகாரங்கள் உள்ளன."},
+  {s:"tamil",q:"தொல்காப்பியத்தின் மூன்று பிரிவுகள் எவை?",o:["அறம், பொருள், இன்பம்","எழுத்து, சொல், பொருள்","இயல், இசை, நாடகம்","அகம், புறம், பக்தி"],a:1,e:"எழுத்து, சொல், பொருள் ஆகியவை தொல்காப்பியத்தின் மூன்று பிரிவுகள்."},
+  {s:"tamil",q:"சிலப்பதிகாரத்தின் ஆசிரியர் யார்?",o:["கம்பர்","இளங்கோ அடிகள்","சீத்தலைச் சாத்தனார்","திருத்தக்கதேவர்"],a:1,e:"சிலப்பதிகாரத்தின் ஆசிரியர் இளங்கோ அடிகள்."},
+  {s:"tamil",q:"மணிமேகலையை இயற்றியவர் யார்?",o:["கம்பர்","ஔவையார்","சீத்தலைச் சாத்தனார்","பாரதியார்"],a:2,e:"மணிமேகலையின் ஆசிரியர் சீத்தலைச் சாத்தனார்."},
   {s:"tamil",q:"தமிழ்த்தாய் வாழ்த்தை இயற்றியவர் யார்?",o:["பாரதியார்","பாரதிதாசன்","மனோன்மணியம் சுந்தரனார்","கவிமணி"],a:2,e:"தமிழ்த்தாய் வாழ்த்தை இயற்றியவர் மனோன்மணியம் சுந்தரனார்."},
-  {s:"tamil",q:"'யாதும் ஊரே யாவரும் கேளிர்' என்று பாடியவர் யார்?",o:["கபிலர்","கணியன் பூங்குன்றனார்","நக்கீரர்","பரணர்"],a:1,e:"புறநானூற்றில் கணியன் பூங்குன்றனார் இந்தப் பாடலைப் பாடியுள்ளார்."},
+  {s:"tamil",q:"'யாதும் ஊரே யாவரும் கேளிர்' பாடியவர் யார்?",o:["கபிலர்","கணியன் பூங்குன்றனார்","நக்கீரர்","பரணர்"],a:1,e:"இந்தப் பாடலைப் பாடியவர் கணியன் பூங்குன்றனார்."},
+  {s:"tamil",q:"திருக்குறளில் உள்ள முப்பால்கள் எவை?",o:["அகம், புறம், வீடு","அறத்துப்பால், பொருட்பால், காமத்துப்பால்","இயல், இசை, நாடகம்","குறிஞ்சி, முல்லை, மருதம்"],a:1,e:"திருக்குறள் அறம், பொருள், இன்பம் ஆகிய மூன்று பகுதிகளைக் கொண்டது."},
 
-  // வரலாறு
   {s:"history",q:"இந்திய தேசிய காங்கிரஸ் தொடங்கப்பட்ட ஆண்டு எது?",o:["1885","1905","1857","1947"],a:0,e:"இந்திய தேசிய காங்கிரஸ் 1885-ல் தொடங்கப்பட்டது."},
-  {s:"history",q:"இந்திய தேசிய காங்கிரஸின் முதல் தலைவர் யார்?",o:["தாதாபாய் நௌரோஜி","ஏ.ஓ. ஹியூம்","டபிள்யூ.சி. பானர்ஜி","கோபால கிருஷ்ண கோகலே"],a:2,e:"முதல் மாநாட்டிற்குத் தலைமை தாங்கியவர் டபிள்யூ.சி. பானர்ஜி."},
+  {s:"history",q:"இந்திய தேசிய காங்கிரஸின் முதல் தலைவர் யார்?",o:["தாதாபாய் நௌரோஜி","ஏ.ஓ. ஹியூம்","டபிள்யூ.சி. பானர்ஜி","கோபால கிருஷ்ண கோகலே"],a:2,e:"முதல் மாநாட்டின் தலைவர் டபிள்யூ.சி. பானர்ஜி."},
   {s:"history",q:"வெள்ளையனே வெளியேறு இயக்கம் தொடங்கிய ஆண்டு எது?",o:["1930","1942","1920","1947"],a:1,e:"வெள்ளையனே வெளியேறு இயக்கம் 1942-ல் தொடங்கியது."},
-  {s:"history",q:"உப்பு சத்தியாகிரகத்தைத் தொடங்கியவர் யார்?",o:["சுபாஷ் சந்திர போஸ்","பகத் சிங்","மகாத்மா காந்தி","பால கங்காதர திலகர்"],a:2,e:"மகாத்மா காந்தி 1930-ல் தண்டி உப்பு சத்தியாகிரகத்தை நடத்தினார்."},
-  {s:"history",q:"இந்தியாவின் முதல் சுதந்திரப் போர் எனப் பொதுவாகக் குறிப்பிடப்படுவது எது?",o:["வேலூர் கிளர்ச்சி 1806","சிப்பாய் கிளர்ச்சி 1857","ஒத்துழையாமை இயக்கம்","சுதேசி இயக்கம்"],a:1,e:"1857 சிப்பாய் கிளர்ச்சி முதல் சுதந்திரப் போர் எனப் பொதுவாகக் குறிப்பிடப்படுகிறது."},
+  {s:"history",q:"தண்டி யாத்திரையை நடத்தியவர் யார்?",o:["நேரு","பகத் சிங்","மகாத்மா காந்தி","சுபாஷ் சந்திர போஸ்"],a:2,e:"மகாத்மா காந்தி 1930-ல் தண்டி யாத்திரை நடத்தினார்."},
   {s:"history",q:"வேலூர் சிப்பாய் கிளர்ச்சி நடந்த ஆண்டு எது?",o:["1757","1806","1857","1885"],a:1,e:"வேலூர் சிப்பாய் கிளர்ச்சி 1806-ல் நடைபெற்றது."},
+  {s:"history",q:"இந்தியாவின் முதல் குடியரசுத் தலைவர் யார்?",o:["ஜவஹர்லால் நேரு","டாக்டர் ராஜேந்திர பிரசாத்","சர்தார் படேல்","டாக்டர் அம்பேத்கர்"],a:1,e:"இந்தியாவின் முதல் குடியரசுத் தலைவர் டாக்டர் ராஜேந்திர பிரசாத்."},
 
-  // அரசியலமைப்பு
-  {s:"polity",q:"இந்திய அரசியலமைப்பு நடைமுறைக்கு வந்த நாள் எது?",o:["15 ஆகஸ்ட் 1947","26 ஜனவரி 1950","26 நவம்பர் 1949","2 அக்டோபர் 1950"],a:1,e:"இந்திய அரசியலமைப்பு 26 ஜனவரி 1950 அன்று நடைமுறைக்கு வந்தது."},
-  {s:"polity",q:"அரசியலமைப்பு வரைவுக் குழுவின் தலைவர் யார்?",o:["ஜவஹர்லால் நேரு","டாக்டர் ராஜேந்திர பிரசாத்","டாக்டர் பி.ஆர். அம்பேத்கர்","சர்தார் வல்லபாய் படேல்"],a:2,e:"வரைவுக் குழுவின் தலைவராக டாக்டர் பி.ஆர். அம்பேத்கர் இருந்தார்."},
-  {s:"polity",q:"இந்திய அரசியலமைப்பில் அடிப்படைக் கடமைகள் எந்தத் திருத்தத்தின் மூலம் சேர்க்கப்பட்டன?",o:["42-வது திருத்தம்","44-வது திருத்தம்","52-வது திருத்தம்","61-வது திருத்தம்"],a:0,e:"42-வது அரசியலமைப்புத் திருத்தம் 1976-ல் அடிப்படைக் கடமைகளைச் சேர்த்தது."},
-  {s:"polity",q:"இந்தியாவில் வாக்களிக்கும் குறைந்தபட்ச வயது என்ன?",o:["16","18","21","25"],a:1,e:"வாக்களிக்கும் வயது 61-வது திருத்தத்தின் மூலம் 21-லிருந்து 18 ஆகக் குறைக்கப்பட்டது."},
-  {s:"polity",q:"இந்திய நாடாளுமன்றத்தின் இரு அவைகள் எவை?",o:["சட்டமன்றம், சட்ட மேலவை","மக்களவை, மாநிலங்களவை","மக்களவை, உச்சநீதிமன்றம்","மாநிலங்களவை, அமைச்சரவை"],a:1,e:"நாடாளுமன்றத்தில் குடியரசுத் தலைவர் மற்றும் மக்களவை, மாநிலங்களவை ஆகியவை அடங்கும்."},
-  {s:"polity",q:"இந்திய அரசியலமைப்பின் முகப்புரையில் 'சோசலிசம்' மற்றும் 'மதச்சார்பின்மை' சேர்க்கப்பட்ட திருத்தம் எது?",o:["24-வது","42-வது","44-வது","73-வது"],a:1,e:"42-வது திருத்தம் 1976-ல் இந்தச் சொற்களை முகப்புரையில் சேர்த்தது."},
+  {s:"polity",q:"இந்திய அரசியலமைப்பு நடைமுறைக்கு வந்த நாள் எது?",o:["15 ஆகஸ்ட் 1947","26 ஜனவரி 1950","26 நவம்பர் 1949","2 அக்டோபர் 1950"],a:1,e:"அரசியலமைப்பு 26 ஜனவரி 1950 அன்று நடைமுறைக்கு வந்தது."},
+  {s:"polity",q:"அரசியலமைப்பு வரைவுக் குழுவின் தலைவர் யார்?",o:["ஜவஹர்லால் நேரு","ராஜேந்திர பிரசாத்","டாக்டர் பி.ஆர். அம்பேத்கர்","சர்தார் படேல்"],a:2,e:"வரைவுக் குழுவின் தலைவர் டாக்டர் பி.ஆர். அம்பேத்கர்."},
+  {s:"polity",q:"இந்தியாவில் வாக்களிக்கும் குறைந்தபட்ச வயது என்ன?",o:["16","18","21","25"],a:1,e:"வாக்களிக்கும் குறைந்தபட்ச வயது 18."},
+  {s:"polity",q:"இந்திய நாடாளுமன்றத்தின் இரு அவைகள் எவை?",o:["சட்டமன்றம், சட்ட மேலவை","மக்களவை, மாநிலங்களவை","மக்களவை, உச்சநீதிமன்றம்","அமைச்சரவை, உச்சநீதிமன்றம்"],a:1,e:"மக்களவை மற்றும் மாநிலங்களவை நாடாளுமன்றத்தின் இரு அவைகள்."},
+  {s:"polity",q:"அடிப்படைக் கடமைகள் எந்தத் திருத்தத்தின் மூலம் சேர்க்கப்பட்டன?",o:["42-வது","44-வது","52-வது","61-வது"],a:0,e:"42-வது அரசியலமைப்புத் திருத்தம் மூலம் அடிப்படைக் கடமைகள் சேர்க்கப்பட்டன."},
 
-  // புவியியல்
-  {s:"geography",q:"இந்தியாவின் மிக நீளமான நதி எது?",o:["கோதாவரி","கங்கை","நர்மதை","கிருஷ்ணா"],a:1,e:"இந்தியாவின் மிக நீளமான நதியாக கங்கை பொதுவாகக் குறிப்பிடப்படுகிறது."},
-  {s:"geography",q:"தமிழ்நாட்டின் மிக உயரமான சிகரம் எது?",o:["ஆனைமுடி","தொட்டபெட்டா","அகத்தியமலை","மகேந்திரகிரி"],a:1,e:"நீலகிரி மலைத்தொடரில் உள்ள தொட்டபெட்டா தமிழ்நாட்டின் மிக உயரமான சிகரமாகும்."},
-  {s:"geography",q:"இந்தியாவின் தென்கோடி நிலப்பகுதி எது?",o:["கன்னியாகுமரி","இந்திரா பாயிண்ட்","ராமேஸ்வரம்","கொச்சி"],a:0,e:"இந்திய நிலப்பரப்பின் தென்கோடி கன்னியாகுமரி. இந்தியாவின் தென்கோடி புள்ளி இந்திரா பாயிண்ட்."},
-  {s:"geography",q:"மேட்டூர் அணை எந்த நதியின் குறுக்கே கட்டப்பட்டுள்ளது?",o:["வைகை","பாலாறு","காவிரி","தாமிரபரணி"],a:2,e:"மேட்டூர் அணை காவிரி ஆற்றின் குறுக்கே கட்டப்பட்டுள்ளது."},
-  {s:"geography",q:"கருப்பு மண் எந்தப் பயிருக்கு மிகவும் ஏற்றது?",o:["தேயிலை","பருத்தி","சணல்","காபி"],a:1,e:"கருப்பு மண் பருத்தி சாகுபடிக்கு ஏற்றது."},
-  {s:"geography",q:"இந்தியாவில் தென்மேற்குப் பருவமழை பொதுவாக எந்த மாதங்களில் பெய்கிறது?",o:["ஜனவரி–மார்ச்","ஏப்ரல்–மே","ஜூன்–செப்டம்பர்","அக்டோபர்–டிசம்பர்"],a:2,e:"தென்மேற்குப் பருவமழை பொதுவாக ஜூன் முதல் செப்டம்பர் வரை பெய்கிறது."},
+  {s:"geography",q:"இந்தியாவில் மிக நீளமான நதி எனப் பொதுவாகக் குறிப்பிடப்படுவது எது?",o:["கோதாவரி","கங்கை","நர்மதை","கிருஷ்ணா"],a:1,e:"இந்தியாவில் மிக நீளமான நதியாக கங்கை பொதுவாகக் குறிப்பிடப்படுகிறது."},
+  {s:"geography",q:"தமிழ்நாட்டின் மிக உயரமான சிகரம் எது?",o:["ஆனைமுடி","தொட்டபெட்டா","அகத்தியமலை","மகேந்திரகிரி"],a:1,e:"தொட்டபெட்டா தமிழ்நாட்டின் மிக உயரமான சிகரம்."},
+  {s:"geography",q:"மேட்டூர் அணை எந்த ஆற்றின் குறுக்கே கட்டப்பட்டுள்ளது?",o:["வைகை","பாலாறு","காவிரி","தாமிரபரணி"],a:2,e:"மேட்டூர் அணை காவிரி ஆற்றின் குறுக்கே கட்டப்பட்டுள்ளது."},
+  {s:"geography",q:"கருப்பு மண் எந்தப் பயிருக்கு ஏற்றது?",o:["தேயிலை","பருத்தி","சணல்","காபி"],a:1,e:"கருப்பு மண் பருத்தி சாகுபடிக்கு ஏற்றது."},
 
-  // அறிவியல்
   {s:"science",q:"வைட்டமின் C குறைபாட்டால் ஏற்படும் நோய் எது?",o:["ரிக்கெட்ஸ்","ஸ்கர்வி","பெரிபெரி","இரத்த சோகை"],a:1,e:"வைட்டமின் C குறைபாடு ஸ்கர்வி நோயை ஏற்படுத்தும்."},
-  {s:"science",q:"மனித உடலில் இரத்தத்தை வடிகட்டும் முக்கிய உறுப்பு எது?",o:["இதயம்","நுரையீரல்","சிறுநீரகம்","வயிறு"],a:2,e:"சிறுநீரகங்கள் இரத்தத்திலிருந்து கழிவுகளை வடிகட்டுகின்றன."},
-  {s:"science",q:"ஒளிச்சேர்க்கையின் போது தாவரங்கள் எந்த வாயுவை வெளியிடுகின்றன?",o:["கார்பன் டை ஆக்சைடு","ஆக்சிஜன்","நைட்ரஜன்","ஹைட்ரஜன்"],a:1,e:"ஒளிச்சேர்க்கையின்போது தாவரங்கள் ஆக்சிஜனை வெளியிடுகின்றன."},
   {s:"science",q:"நீரின் வேதியியல் வாய்ப்பாடு என்ன?",o:["CO2","O2","H2O","NaCl"],a:2,e:"நீரின் வேதியியல் வாய்ப்பாடு H₂O."},
-  {s:"science",q:"மனித உடலில் மிகப்பெரிய உறுப்பு எது?",o:["கல்லீரல்","தோல்","இதயம்","நுரையீரல்"],a:1,e:"மனித உடலின் மிகப்பெரிய உறுப்பு தோல்."},
-  {s:"science",q:"ஒலியின் வேகம் அதிகமாக இருப்பது எந்த ஊடகத்தில்?",o:["வெற்றிடம்","வாயு","திரவம்","திடம்"],a:3,e:"பொதுவாக ஒலி திடப்பொருட்களில் மிக வேகமாகப் பரவுகிறது."},
+  {s:"science",q:"ஒளிச்சேர்க்கையின்போது தாவரங்கள் வெளியிடும் வாயு எது?",o:["கார்பன் டை ஆக்சைடு","ஆக்சிஜன்","நைட்ரஜன்","ஹைட்ரஜன்"],a:1,e:"ஒளிச்சேர்க்கையின் போது ஆக்சிஜன் வெளியிடப்படுகிறது."},
+  {s:"science",q:"மனித உடலின் மிகப்பெரிய உறுப்பு எது?",o:["கல்லீரல்","தோல்","இதயம்","நுரையீரல்"],a:1,e:"மனித உடலின் மிகப்பெரிய உறுப்பு தோல்."},
 
-  // பொருளாதாரம்
-  {s:"economy",q:"இந்திய ரிசர்வ் வங்கி எந்த ஆண்டு தொடங்கப்பட்டது?",o:["1935","1947","1950","1969"],a:0,e:"இந்திய ரிசர்வ் வங்கி 1 ஏப்ரல் 1935 அன்று தொடங்கப்பட்டது."},
-  {s:"economy",q:"இந்தியாவில் பணவியல் கொள்கையை வகுக்கும் முக்கிய நிறுவனம் எது?",o:["நிதி ஆயோக்","இந்திய ரிசர்வ் வங்கி","தேர்தல் ஆணையம்","நிதி ஆணையம்"],a:1,e:"இந்திய ரிசர்வ் வங்கி பணவியல் கொள்கையில் முக்கியப் பங்கு வகிக்கிறது."},
-  {s:"economy",q:"GST இந்தியாவில் நடைமுறைக்கு வந்த நாள் எது?",o:["1 ஜனவரி 2016","1 ஜூலை 2017","1 ஏப்ரல் 2018","15 ஆகஸ்ட் 2017"],a:1,e:"சரக்கு மற்றும் சேவை வரி 1 ஜூலை 2017 அன்று நடைமுறைக்கு வந்தது."},
-  {s:"economy",q:"NITI Aayog எந்த ஆண்டில் அமைக்கப்பட்டது?",o:["2010","2012","2015","2017"],a:2,e:"NITI Aayog 1 ஜனவரி 2015 அன்று அமைக்கப்பட்டது."},
+  {s:"economy",q:"இந்திய ரிசர்வ் வங்கி தொடங்கப்பட்ட ஆண்டு எது?",o:["1935","1947","1950","1969"],a:0,e:"இந்திய ரிசர்வ் வங்கி 1935-ல் தொடங்கப்பட்டது."},
+  {s:"economy",q:"இந்தியாவில் GST நடைமுறைக்கு வந்த நாள் எது?",o:["1 ஜனவரி 2016","1 ஜூலை 2017","1 ஏப்ரல் 2018","15 ஆகஸ்ட் 2017"],a:1,e:"GST 1 ஜூலை 2017 அன்று நடைமுறைக்கு வந்தது."},
+  {s:"economy",q:"NITI Aayog அமைக்கப்பட்ட ஆண்டு எது?",o:["2010","2012","2015","2017"],a:2,e:"NITI Aayog 2015-ல் அமைக்கப்பட்டது."},
 
-  // நடப்பு நிகழ்வுகள் / நிலையான பொது அறிவு
-  {s:"current",q:"இந்தியாவில் தேசிய வாக்காளர் தினம் எப்போது கடைப்பிடிக்கப்படுகிறது?",o:["ஜனவரி 12","ஜனவரி 25","ஜனவரி 26","மார்ச் 8"],a:1,e:"தேசிய வாக்காளர் தினம் ஒவ்வோர் ஆண்டும் ஜனவரி 25 அன்று கடைப்பிடிக்கப்படுகிறது."},
-  {s:"current",q:"இந்தியாவில் அரசியலமைப்பு தினம் எப்போது கடைப்பிடிக்கப்படுகிறது?",o:["ஜனவரி 26","ஆகஸ்ட் 15","நவம்பர் 26","அக்டோபர் 2"],a:2,e:"அரசியலமைப்பு தினம் நவம்பர் 26 அன்று கடைப்பிடிக்கப்படுகிறது."},
-  {s:"current",q:"உலக சுற்றுச்சூழல் தினம் எப்போது?",o:["ஜூன் 5","ஏப்ரல் 22","மார்ச் 21","ஜூலை 11"],a:0,e:"உலக சுற்றுச்சூழல் தினம் ஜூன் 5 அன்று கடைப்பிடிக்கப்படுகிறது."},
-  {s:"current",q:"இந்தியாவின் தேசிய அறிவியல் தினம் எப்போது?",o:["பிப்ரவரி 28","மார்ச் 8","செப்டம்பர் 5","நவம்பர் 14"],a:0,e:"சி.வி. ராமன் விளைவைக் கண்டறிந்ததை நினைவுகூர்ந்து பிப்ரவரி 28 தேசிய அறிவியல் தினமாகக் கடைப்பிடிக்கப்படுகிறது."},
+  {s:"current",q:"தேசிய வாக்காளர் தினம் எப்போது?",o:["ஜனவரி 12","ஜனவரி 25","ஜனவரி 26","மார்ச் 8"],a:1,e:"தேசிய வாக்காளர் தினம் ஜனவரி 25 அன்று கடைப்பிடிக்கப்படுகிறது."},
+  {s:"current",q:"இந்திய அரசியலமைப்பு தினம் எப்போது?",o:["ஜனவரி 26","ஆகஸ்ட் 15","நவம்பர் 26","அக்டோபர் 2"],a:2,e:"அரசியலமைப்பு தினம் நவம்பர் 26 அன்று கடைப்பிடிக்கப்படுகிறது."},
+  {s:"current",q:"தேசிய அறிவியல் தினம் எப்போது?",o:["பிப்ரவரி 28","மார்ச் 8","செப்டம்பர் 5","நவம்பர் 14"],a:0,e:"தேசிய அறிவியல் தினம் பிப்ரவரி 28 அன்று கடைப்பிடிக்கப்படுகிறது."},
 
-  // திறனறிவு / கணிதம்
   {s:"maths",q:"200-ன் 25% எவ்வளவு?",o:["25","40","50","75"],a:2,e:"200 × 25/100 = 50."},
-  {s:"maths",q:"12, 18, 24 ஆகிய எண்களின் மீ.சி.ம. என்ன?",o:["36","48","72","96"],a:2,e:"12, 18, 24 ஆகியவற்றின் மீ.சி.ம. 72."},
-  {s:"maths",q:"ஒரு பொருளின் விலை ₹500. 10% தள்ளுபடி என்றால் விற்பனை விலை என்ன?",o:["₹400","₹450","₹475","₹490"],a:1,e:"தள்ளுபடி ₹50; விற்பனை விலை ₹450."},
-  {s:"maths",q:"ஒரு வாகனம் மணிக்கு 60 கி.மீ. வேகத்தில் 3 மணி நேரம் சென்றால் பயணித்த தூரம் என்ன?",o:["120 கி.மீ.","150 கி.மீ.","180 கி.மீ.","200 கி.மீ."],a:2,e:"தூரம் = வேகம் × நேரம் = 60 × 3 = 180 கி.மீ."},
-  {s:"maths",q:"தொடர்: 2, 4, 8, 16, __. அடுத்த எண் எது?",o:["18","24","30","32"],a:3,e:"ஒவ்வொரு எண்ணும் 2-ஆல் பெருக்கப்படுகிறது; அடுத்த எண் 32."},
-  {s:"maths",q:"ஒரு எண்ணின் 3/4 பங்கு 60 என்றால் அந்த எண் என்ன?",o:["45","75","80","90"],a:2,e:"எண் = 60 × 4/3 = 80."}
+  {s:"maths",q:"12, 18, 24 ஆகியவற்றின் மீ.சி.ம. என்ன?",o:["36","48","72","96"],a:2,e:"இந்த எண்களின் மீ.சி.ம. 72."},
+  {s:"maths",q:"₹500-க்கு 10% தள்ளுபடி அளித்தால் விலை என்ன?",o:["₹400","₹450","₹475","₹490"],a:1,e:"₹500-ல் 10% என்பது ₹50. விற்பனை விலை ₹450."},
+  {s:"maths",q:"ஒரு வாகனம் மணிக்கு 60 கி.மீ. வேகத்தில் 3 மணி நேரம் சென்றால் தூரம் என்ன?",o:["120 கி.மீ.","150 கி.மீ.","180 கி.மீ.","200 கி.மீ."],a:2,e:"தூரம் = வேகம் × நேரம் = 180 கி.மீ."},
+  {s:"maths",q:"2, 4, 8, 16, அடுத்த எண் எது?",o:["18","24","30","32"],a:3,e:"ஒவ்வொரு எண்ணும் இரட்டிப்பாகிறது. அடுத்த எண் 32."}
 ];
 
 const MENU = {
   keyboard: [
-    [{text:"🎯 Normal Mixed Quiz", callback_data:"mixed"}],
-    [{text:"📚 Subject-wise Quiz", callback_data:"subjects"}]
+    [{text:"🎯 கலப்பு தேர்வு (25)"}],
+    [{text:"📚 முந்தைய ஆண்டு வினாக்கள்"}],
+    [{text:"📖 படிப்பு முறை"}],
+    [{text:"📝 பாடவாரித் தேர்வு"}],
+    [{text:"🔄 தவறான வினாக்கள்"}],
+    [{text:"⭐ சேமித்த வினாக்கள்"}],
+    [{text:"📊 மதிப்பெண்கள்"}]
   ],
   resize_keyboard: true
 };
 
-function inlineKeyboard(rows) {
-  return { inline_keyboard: rows };
+function inline(rows) {
+  return {inline_keyboard: rows};
 }
 
-async function telegram(env, method, body) {
-  const response = await fetch(
+async function api(env, method, data) {
+  const r = await fetch(
     `https://api.telegram.org/bot${env.TELEGRAM_BOT_TOKEN}/${method}`,
     {
       method: "POST",
-      headers: {"Content-Type": "application/json"},
-      body: JSON.stringify(body)
+      headers: {"Content-Type":"application/json"},
+      body: JSON.stringify(data)
     }
   );
-  return response.json();
+  return r.json();
 }
 
-async function sendMessage(env, chatId, text, replyMarkup) {
-  return telegram(env, "sendMessage", {
-    chat_id: chatId,
+async function say(env, chat, text, markup) {
+  return api(env, "sendMessage", {
+    chat_id: chat,
     text,
-    ...(replyMarkup ? {reply_markup: replyMarkup} : {})
+    ...(markup ? {reply_markup:markup} : {})
   });
 }
 
-function shuffle(array) {
-  const result = [...array];
-  for (let i = result.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [result[i], result[j]] = [result[j], result[i]];
+function shuffle(arr) {
+  const a = [...arr];
+  for (let i=a.length-1; i>0; i--) {
+    const j=Math.floor(Math.random()*(i+1));
+    [a[i],a[j]]=[a[j],a[i]];
   }
-  return result;
+  return a;
 }
 
-async function showCountMenu(env, chatId, subject) {
-  const label = subject === "mixed" ? "Normal Mixed Quiz" : SUBJECTS[subject];
-  await sendMessage(
-    env,
-    chatId,
-    `📘 ${label}\nஎத்தனை கேள்விகள் வேண்டும்?`,
-    inlineKeyboard([
-      [
-        {text:"10",callback_data:`count|${subject}|10`},
-        {text:"25",callback_data:`count|${subject}|25`}
-      ],
-      [
-        {text:"50",callback_data:`count|${subject}|50`},
-        {text:"100",callback_data:`count|${subject}|100`}
-      ],
-      [{text:"🏠 Main Menu",callback_data:"home"}]
+async function showSubjects(env, chat) {
+  const keys=Object.keys(SUBJECTS);
+  const rows=[];
+  for(let i=0;i<keys.length;i+=2) {
+    rows.push(keys.slice(i,i+2).map(k=>({
+      text:SUBJECTS[k],
+      callback_data:"sub|"+k
+    })));
+  }
+  await say(env,chat,"📝 பாடத்தைத் தேர்வு செய்யுங்கள்:",inline(rows));
+}
+
+async function showCounts(env, chat, mode) {
+  await say(
+    env,chat,
+    "எத்தனை கேள்விகள் வேண்டும்?",
+    inline([
+      [{text:"10",callback_data:`num|${mode}|10`},{text:"25",callback_data:`num|${mode}|25`}],
+      [{text:"50",callback_data:`num|${mode}|50`},{text:"100",callback_data:`num|${mode}|100`}],
+      [{text:"🏠 Menu",callback_data:"menu"}]
     ])
   );
 }
 
-async function showSubjects(env, chatId) {
-  const keys = Object.keys(SUBJECTS);
-  const rows = [];
-  for (let i = 0; i < keys.length; i += 2) {
-    rows.push(keys.slice(i, i + 2).map(key => ({
-      text: SUBJECTS[key],
-      callback_data: `subject|${key}`
-    })));
-  }
-  rows.push([{text:"🏠 Main Menu",callback_data:"home"}]);
-  await sendMessage(
-    env,
-    chatId,
-    "📚 எந்தப் பாடத்தில் quiz வேண்டும்?",
-    inlineKeyboard(rows)
-  );
-}
+async function begin(env, uid, chat, mode, count) {
+  let pool = QUESTIONS;
 
-async function startQuiz(env, userId, chatId, subject, requestedCount) {
-  const pool = subject === "mixed"
-    ? QUESTIONS
-    : QUESTIONS.filter(q => q.s === subject);
-
-  if (!pool.length) {
-    await sendMessage(env, chatId, "இந்தப் பாடத்தில் கேள்விகள் இல்லை.", MENU);
+  if (mode === "pyq") {
+    // இந்த code-ல் தனியாக உறுதிப்படுத்தப்பட்ட முந்தைய ஆண்டு வினா தரவுத்தொகுப்பு இல்லை.
+    await say(env,chat,"முந்தைய ஆண்டு வினாக்களுக்கு உறுதிப்படுத்தப்பட்ட தனி வினாத்தொகுப்பு இன்னும் சேர்க்கப்படவில்லை. இப்போது Mixed Quiz தேர்வு செய்யலாம்.",MENU);
     return;
   }
 
-  // Available question count-ஐ விட அதிகமாகத் தேர்ந்தெடுத்தால்,
-  // இருக்கும் கேள்விகளை மீண்டும் பயன்படுத்தாமல் கிடைக்கும் எண்ணிக்கையே எடுக்கப்படும்.
-  const count = Math.min(requestedCount, pool.length);
-  const selected = shuffle(pool).slice(0, count);
+  if (SUBJECTS[mode]) pool=QUESTIONS.filter(q=>q.s===mode);
 
-  active.set(String(userId), {
-    chatId,
-    questions: selected,
-    index: 0,
-    score: 0,
-    waiting: null,
-    answeredPolls: new Set()
-  });
-
-  if (count < requestedCount) {
-    await sendMessage(
-      env,
-      chatId,
-      `இந்தத் தேர்வில் தற்போது ${pool.length} கேள்விகள் மட்டுமே உள்ளன. ${count} கேள்விகள் தொடங்குகின்றன.`
-    );
+  if (!pool.length) {
+    await say(env,chat,"இந்தப் பாடத்தில் கேள்விகள் இல்லை.",MENU);
+    return;
   }
 
-  await nextQuestion(env, String(userId));
+  const selected=shuffle(pool).slice(0,Math.min(count,pool.length));
+
+  const p=profiles.get(uid) || {score:0,correct:0,wrong:[],saved:[]};
+  profiles.set(uid,p);
+
+  active.set(uid,{
+    chat,
+    questions:selected,
+    index:0,
+    score:0,
+    mode,
+    waiting:null,
+    wrong:[],
+    answered:new Set()
+  });
+
+  if(selected.length<count) {
+    await say(env,chat,`தற்போது ${pool.length} கேள்விகள் மட்டுமே உள்ளன. ${selected.length} கேள்விகள் தொடங்குகின்றன.`);
+  }
+
+  await next(env,uid);
 }
 
-async function nextQuestion(env, userId) {
-  const state = active.get(String(userId));
-  if (!state) return;
+async function next(env,uid) {
+  const s=active.get(uid);
+  if(!s)return;
 
-  if (state.index >= state.questions.length) {
-    const total = state.questions.length;
-    const score = state.score;
-    active.delete(String(userId));
+  if(s.index>=s.questions.length) {
+    const p=profiles.get(uid);
+    p.score+=s.score;
+    p.correct+=s.score;
+    p.wrong.push(...s.wrong);
 
-    await sendMessage(
-      env,
-      state.chatId,
-      `🏁 Quiz முடிந்தது!\n\nமொத்தக் கேள்விகள்: ${total}\nசரியான பதில்கள்: ${score}\nதவறான பதில்கள்: ${total - score}\nமதிப்பெண்: ${score}/${total}`,
+    active.delete(uid);
+
+    await say(
+      env,s.chat,
+      `🏁 தேர்வு முடிந்தது!\n\nமொத்த வினாக்கள்: ${s.questions.length}\nசரியான பதில்கள்: ${s.score}\nதவறான பதில்கள்: ${s.questions.length-s.score}\nமதிப்பெண்: ${s.score}/${s.questions.length}`,
       MENU
     );
     return;
   }
 
-  const question = state.questions[state.index];
+  const q=s.questions[s.index];
+  const opts=shuffle(q.o.map((text,i)=>({text,i})));
+  const answer=opts.findIndex(x=>x.i===q.a);
 
-  // பதில்களின் இடத்தை மாற்றி, சரியான பதிலின் புதிய இடத்தையும் கணக்கிடுகிறது.
-  const shuffled = shuffle(
-    question.o.map((text, originalIndex) => ({text, originalIndex}))
-  );
-
-  const options = shuffled.map(item => item.text);
-  const correctOptionId = shuffled.findIndex(
-    item => item.originalIndex === question.a
-  );
-
-  const result = await telegram(env, "sendPoll", {
-    chat_id: state.chatId,
-    question: `வினா ${state.index + 1}/${state.questions.length}\n${question.q}`,
-    options,
-    type: "quiz",
-    correct_option_id: correctOptionId,
-    is_anonymous: false,
-    explanation: question.e
+  const r=await api(env,"sendPoll",{
+    chat_id:s.chat,
+    question:`வினா ${s.index+1}/${s.questions.length}\n${q.q}`,
+    options:opts.map(x=>x.text),
+    type:"quiz",
+    correct_option_id:answer,
+    is_anonymous:false,
+    explanation:q.e
   });
 
-  if (!result.ok) {
-    console.error("SEND_POLL_ERROR", JSON.stringify(result));
-    await sendMessage(env, state.chatId, "வினாவை அனுப்ப முடியவில்லை. /start மூலம் மீண்டும் தொடங்குங்கள்.", MENU);
-    active.delete(String(userId));
+  if(!r.ok) {
+    console.error("POLL_ERROR",JSON.stringify(r));
+    await say(env,s.chat,"வினாவை அனுப்ப முடியவில்லை. /start மூலம் மீண்டும் முயற்சி செய்யுங்கள்.",MENU);
+    active.delete(uid);
     return;
   }
 
-  state.waiting = {
-    pollId: result.result.poll.id,
-    question: {
-      ...question,
-      o: options,
-      a: correctOptionId
-    }
+  s.waiting={
+    pollId:r.result.poll.id,
+    q:{...q,o:opts.map(x=>x.text),a:answer}
   };
-  state.index += 1;
+  s.index++;
 }
 
-async function handleUpdate(env, update) {
-  if (update.message) {
-    const message = update.message;
-    const chatId = message.chat.id;
-    const userId = String(message.from.id);
-    const text = (message.text || "").trim();
+async function handle(env,u) {
+  if(u.message) {
+    const m=u.message;
+    const uid=String(m.from.id);
+    const chat=m.chat.id;
+    const t=(m.text||"").trim();
 
-    if (text === "/start" || text === "/menu") {
-      await sendMessage(
-        env,
-        chatId,
-        "🎓 TNPSC Group 4 Tamil Quiz Bot\n\nஉங்களுக்கு வேண்டிய quiz-ஐத் தேர்வு செய்யுங்கள்.",
-        MENU
-      );
-    } else if (text === "/stop") {
-      active.delete(userId);
-      await sendMessage(env, chatId, "Quiz நிறுத்தப்பட்டது.", MENU);
+    if(t==="/start" || t==="/menu") {
+      await say(env,chat,"வணக்கம்! TNPSC Group 4 தமிழ் பயிற்சிக்கு வரவேற்கிறோம்.\nஒரு பயிற்சியைத் தேர்ந்தெடுக்கவும்.",MENU);
+    } else if(t==="/stop") {
+      active.delete(uid);
+      await say(env,chat,"Quiz நிறுத்தப்பட்டது.",MENU);
+    } else if(t.includes("கலப்பு தேர்வு")) {
+      await begin(env,uid,chat,"mixed",25);
+    } else if(t.includes("முந்தைய ஆண்டு")) {
+      await begin(env,uid,chat,"pyq",25);
+    } else if(t.includes("படிப்பு முறை")) {
+      await say(env,chat,"📖 படிப்பு முறை: பாடவாரித் தேர்வைத் தேர்வு செய்து கேள்விகளைப் பயிற்சி செய்யுங்கள். ஒவ்வொரு வினாவிற்கும் விளக்கம் வழங்கப்படும்.",MENU);
+      await showSubjects(env,chat);
+    } else if(t.includes("பாடவாரித் தேர்வு")) {
+      await showSubjects(env,chat);
+    } else if(t.includes("தவறான வினாக்கள்")) {
+      const p=profiles.get(uid);
+      if(!p || !p.wrong.length) {
+        await say(env,chat,"இன்னும் தவறான வினாக்கள் இல்லை. முதலில் ஒரு தேர்வை முடிக்கவும்.",MENU);
+      } else {
+        await beginWrong(env,uid,chat);
+      }
+    } else if(t.includes("சேமித்த வினாக்கள்")) {
+      const p=profiles.get(uid);
+      if(!p || !p.saved.length) {
+        await say(env,chat,"சேமித்த வினாக்கள் இல்லை. Quiz முடிவில் கேள்விகளை சேமிக்கும் வசதியைத் தேர்வு செய்யலாம்.",MENU);
+      } else {
+        await say(env,chat,`⭐ சேமித்த வினாக்கள்: ${p.saved.length}\n${p.saved.map((q,i)=>`${i+1}. ${q.q}`).join("\n")}`,MENU);
+      }
+    } else if(t.includes("மதிப்பெண்கள்")) {
+      const p=profiles.get(uid)||{score:0,correct:0,wrong:[]};
+      await say(env,chat,`📊 மதிப்பெண் விவரம்\nமொத்த சரியான பதில்கள்: ${p.correct}\nசேமித்த தவறான வினாக்கள்: ${p.wrong.length}`,MENU);
     } else {
-      await sendMessage(env, chatId, "Quiz தொடங்க /start அழுத்துங்கள்.", MENU);
+      await say(env,chat,"கீழே உள்ள menu-வில் ஒரு option-ஐத் தேர்வு செய்யுங்கள்.",MENU);
     }
     return;
   }
 
-  if (update.callback_query) {
-    const callback = update.callback_query;
-    const data = callback.data || "";
-    const chatId = callback.message.chat.id;
-    const userId = String(callback.from.id);
+  if(u.callback_query) {
+    const c=u.callback_query;
+    const uid=String(c.from.id);
+    const chat=c.message.chat.id;
+    const d=c.data||"";
 
-    await telegram(env, "answerCallbackQuery", {
-      callback_query_id: callback.id
-    });
+    await api(env,"answerCallbackQuery",{callback_query_id:c.id});
 
-    if (data === "home") {
-      await sendMessage(env, chatId, "முதன்மை மெனு:", MENU);
-    } else if (data === "mixed") {
-      await showCountMenu(env, chatId, "mixed");
-    } else if (data === "subjects") {
-      await showSubjects(env, chatId);
-    } else if (data.startsWith("subject|")) {
-      const subject = data.split("|")[1];
-      if (SUBJECTS[subject]) {
-        await showCountMenu(env, chatId, subject);
-      }
-    } else if (data.startsWith("count|")) {
-      const [, subject, rawCount] = data.split("|");
-      const count = Number(rawCount);
-      if ((subject === "mixed" || SUBJECTS[subject]) &&
-          [10, 25, 50, 100].includes(count)) {
-        await startQuiz(env, userId, chatId, subject, count);
-      }
+    if(d==="menu") {
+      await say(env,chat,"முதன்மை மெனு:",MENU);
+    } else if(d.startsWith("sub|")) {
+      const subject=d.split("|")[1];
+      if(SUBJECTS[subject]) await showCounts(env,chat,subject);
+    } else if(d.startsWith("num|")) {
+      const [,mode,n]=d.split("|");
+      await begin(env,uid,chat,mode,Number(n));
     }
     return;
   }
 
-  if (update.poll_answer) {
-    const answer = update.poll_answer;
-    const userId = String(answer.user.id);
-    const state = active.get(userId);
+  if(u.poll_answer) {
+    const a=u.poll_answer;
+    const uid=String(a.user.id);
+    const s=active.get(uid);
 
-    if (!state || !state.waiting) return;
-    if (state.waiting.pollId !== answer.poll_id) return;
-    if (state.answeredPolls.has(answer.poll_id)) return;
+    if(!s || !s.waiting || s.waiting.pollId!==a.poll_id) return;
+    if(s.answered.has(a.poll_id)) return;
+    s.answered.add(a.poll_id);
 
-    state.answeredPolls.add(answer.poll_id);
-
-    if (answer.option_ids && answer.option_ids[0] === state.waiting.question.a) {
-      state.score += 1;
+    if(a.option_ids && a.option_ids[0]===s.waiting.q.a) {
+      s.score++;
+    } else {
+      s.wrong.push(s.waiting.q);
     }
 
-    state.waiting = null;
-    await nextQuestion(env, userId);
+    s.waiting=null;
+    await next(env,uid);
   }
+}
+
+async function beginWrong(env,uid,chat) {
+  const p=profiles.get(uid);
+  const qs=shuffle(p.wrong);
+  active.set(uid,{
+    chat,
+    questions:qs,
+    index:0,
+    score:0,
+    mode:"wrong",
+    waiting:null,
+    wrong:[],
+    answered:new Set()
+  });
+  await next(env,uid);
 }
 
 export default {
-  async fetch(request, env) {
-    if (request.method !== "POST") {
-      return new Response(
-        "TNPSC Tamil Quiz Bot is running.",
-        {status: 200}
-      );
+  async fetch(request,env) {
+    if(request.method!=="POST") {
+      return new Response("TNPSC Tamil Quiz Bot is running.");
     }
 
-    if (!env.TELEGRAM_BOT_TOKEN) {
-      return new Response("Missing TELEGRAM_BOT_TOKEN secret", {status: 500});
+    if(!env.TELEGRAM_BOT_TOKEN) {
+      return new Response("TELEGRAM_BOT_TOKEN secret missing",{status:500});
     }
 
     try {
-      const update = await request.json();
-      await handleUpdate(env, update);
+      const update=await request.json();
+      await handle(env,update);
       return new Response("OK");
-    } catch (error) {
-      console.error("WEBHOOK_ERROR", error);
-      return new Response("Internal error", {status: 500});
+    } catch(e) {
+      console.error("WEBHOOK_ERROR",e);
+      return new Response("Internal error",{status:500});
     }
   }
 };
