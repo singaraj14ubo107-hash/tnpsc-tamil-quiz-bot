@@ -41,7 +41,7 @@ const QUESTIONS = [
 
 async function telegram(env, method, body) {
   const response = await fetch(
-    `https://api.telegram.org/bot${env.BOT_TOKEN}/${method}`, 
+    `https://api.telegram.org/bot${env.BOT_TOKEN}/${method}`,
     {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -92,7 +92,6 @@ export default {
 
       const choice = update.callback_query.data;
 
-      
       if (choice.startsWith("ans|")) {
         const [, idxText, scoreText, selectedText, totalText] =
           choice.split("|");
@@ -124,8 +123,7 @@ export default {
             reply_markup: {
               inline_keyboard: next.o.map((v, i) => [{
                 text: `${"ABCD"[i]}. ${v}`,
-                callback_data:
-                  `ans|${idx + 1}|${newScore}|${i}|${total}`
+                callback_data: `ans|${idx + 1}|${newScore}|${i}|${total}`
               }])
             }
           });
@@ -166,7 +164,6 @@ export default {
           text: "இந்த வசதி அடுத்த கட்டத்தில் இணைக்கப்படும்."
         });
       }
-
     }
 
     return new Response("OK");
@@ -174,3 +171,4 @@ export default {
 };
 
 export { QUESTIONS };
+
