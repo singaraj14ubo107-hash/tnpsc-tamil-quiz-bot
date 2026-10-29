@@ -1,130 +1,192 @@
-const MENU = {
-  keyboard: [
-    [{ text: "🧠 AI ஸ்மார்ட் தேர்வு (Auto Generate)", callback_data: "ai_quiz" }],
-    [{ text: "📚 முந்தைய ஆண்டு வினாக்கள்", callback_data: "previous" }],
-    [{ text: "📖 படிப்பு முறை", callback_data: "study" }]
-  ]
-};
+
+const API = "https://api.telegram.org/bot";
 
 async function telegram(env, method, body) {
   const response = await fetch(
-    `https://api.telegram.org/bot${env.TELEGRAM_BOT_TOKEN}/${method}`, 
+    `${API}${env.TELEGRAM_BOT_TOKEN}/${method}`,
     {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(body)
     }
   );
-  return response.json();
+
+  const data = await response.json();
+
+  if (!data.ok) {
+    console.log("Telegram API error:", data.description);
+  }
+
+  return data;
 }
 
 async function getAIQuestion(env) {
-  const prompt = `You are a TNPSC Group 4 exam expert. Generate ONE multiple-choice question in Tamil.
-  Topics: Randomly choose from History, Polity, Geography, Tamil literature, or Science (strictly NO MATH).
-  Difficulty: Hard (Statement/Reasoning, matching, or tricky options).
-  Constraints:
-  - Question length: strictly under 280 characters.
-  - Options: exactly 4 options, each strictly under 90 characters.
-  - Explanation: strictly under 190 characters in Tamil.
-  Output ONLY a valid JSON object. No markdown formatting, no backticks.
-  Format:
-  {
-    "q": "Question text here",
-    "o": ["Option 1", "Option 2", "Option 3", "Option 4"],
-    "a": 2, // Integer index of the correct option (0 to 3)
-    "e": "Short explanation here"
-  }`;
+  const prompt = `
+Create ONE original TNPSC Group 4 exam practice question
+in Tamil. Topic: Tamil Nadu general knowledge, Tamil,
+Indian polity, history, geography, or science.
+
+Return only valid JSON in this format:
+{
+  "question": "தமிழில் கேள்வி",
+  "options": ["விடை A", "விடை B", "விடை C", "விடை D"],
+  "answer": 0,
+  "explanation": "சுருக்கமான தமிழ் விளக்கம்"
+}
+
+Rules:
+- Exactly four options.
+- answer must be 0, 1, 2, or 3.
+- Only one option is correct.
+- Keep the question and options concise.
+- Do not invent facts.
+`;
+
+  const response = await fetch(
+    "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent",
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-goog-api-key": env.GEMINI_API_KEY
+      },
+      body: JSON.stringify({
+        contents: [
+          { parts: [{ text: prompt }] }
+        ],
+        generationConfig: {
+          responseMimeType: "application/json",
+          temperature: 0.7
+        }
+      })
+    }
+  );
+
+  if (!response.ok) {
+    console.log("Gemini API error:", await response.text());
+    return null;
+  }
+
+  const data = await response.json();
+  const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
+
+  if (!text) return null;
 
   try {
-    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${env.GEMINI_API_KEY}`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        contents: [{ parts: [{ text: prompt }] }],
-        generationConfig: { temperature: 0.8 }
-      })
-    });
-    const data = await response.json();
-    let text = data.candidates[0].content.parts[0].text;
-    text = text.replace(/```json/g, '').replace(/```/g, '').trim();
-    return JSON.parse(text);
+    const q = JSON.parse(text);
+
+    if (
+      typeof q.question !== "string" ||
+      !Array.isArray(q.options) ||
+      q.options.length !== 4 ||
+      !Number.isInteger(q.answer) ||
+      q.answer < 0 ||
+      q.answer > 3
+    ) {
+      return null;
+    }
+
+    return q;
   } catch (error) {
-    return {
-      q: "மன்னிக்கவும், AI வினாவை உருவாக்குவதில் சிறு பிழை ஏற்பட்டுள்ளது. மீண்டும் முயற்சிக்கவும்.",
-      o: ["சரி", "தவறு", "தெரியவில்லை", "மீண்டும் முயல்க"],
-      a: 0,
-      e: "Network or API format error."
-    };
+    console.log("Question JSON error:", String(error));
+    return null;
   }
 }
 
-function menu(chatId) {
-  return {
+async function sendQuiz(env, chatId) {
+  const q = await getAIQuestion(env);
+
+  if (!q) {
+    await telegram(env, "sendMessage", {
+      chat_id: chatId,
+      text: "மன்னிக்கவும்! AI கேள்வியை உருவாக்க முடியவில்லை. சிறிது நேரம் கழித்து மீண்டும் முயற்சிக்கவும்."
+    });
+    return;
+  }
+
+  await telegram(env, "sendPoll", {
     chat_id: chatId,
-    text: "வணக்கம்! TNPSC AI Quiz Bot-க்கு வரவேற்கிறோம்.\nAI மூலம் புதிய வினாக்களை உருவாக்க கீழே கிளிக் செய்யவும்.",
-    reply_markup: { inline_keyboard: MENU.keyboard }
-  };
+    question: q.question,
+    options: q.options,
+    type: "quiz",
+    correct_option_id: q.answer,
+    explanation: q.explanation || "சரியான விடையைப் பாருங்கள்.",
+    is_anonymous: false
+  });
+
+  await telegram(env, "sendMessage", {
+    chat_id: chatId,
+    text: "அடுத்த புதிய AI கேள்விக்கு கீழே அழுத்துங்கள்.",
+    reply_markup: {
+      inline_keyboard: [
+        [{ text: "🧠 அடுத்த AI கேள்வி", callback_data: "next_ai" }],
+        [{ text: "🏠 முதன்மை Menu", callback_data: "home" }]
+      ]
+    }
+  });
 }
 
 export default {
   async fetch(request, env) {
-    if (request.method !== "POST") return new Response("Bot is running");
-
-    let update;
-    try { update = await request.json(); } catch { return new Response("OK"); }
-
-    const chatId = update.message?.chat?.id ?? update.callback_query?.message?.chat?.id;
-    if (!chatId) return new Response("OK");
-
-    if (update.message?.text === "/start" || update.message?.text === "/menu") {
-      await telegram(env, "sendMessage", menu(chatId));
-      return new Response("OK");
+    if (request.method !== "POST") {
+      return new Response("TNPSC Tamil Quiz Bot is running.");
     }
 
-    if (update.callback_query) {
-      const choice = update.callback_query.data;
-      const callbackId = update.callback_query.id;
+    try {
+      const update = await request.json();
 
-      if (choice === "ai_quiz") {
-        await telegram(env, "answerCallbackQuery", {
-          callback_query_id: callbackId,
-          text: "AI வினாவை உருவாக்குகிறது... ⏳"
-        });
+      if (update.message) {
+        const chatId = update.message.chat.id;
+        const message = (update.message.text || "").trim();
 
-        const loadingMsg = await telegram(env, "sendMessage", {
-          chat_id: chatId,
-          text: "🤖 *Gemini AI* உங்களுக்கான புதிய வினாவை உருவாக்குகிறது... காத்திருக்கவும் ⏳",
-          parse_mode: "Markdown"
-        });
-
-        const aiData = await getAIQuestion(env);
-
-        if (loadingMsg && loadingMsg.result) {
-          await telegram(env, "deleteMessage", {
+        if (message === "/start" || message === "/menu") {
+          await telegram(env, "sendMessage", {
             chat_id: chatId,
-            message_id: loadingMsg.result.message_id
+            text: "வணக்கம்! TNPSC Group 4 தமிழ் AI Quiz Bot-க்கு வரவேற்கிறேன்.",
+            reply_markup: {
+              inline_keyboard: [
+                [{ text: "🧠 AI Quiz தொடங்கு", callback_data: "ai_quiz" }]
+              ]
+            }
+          });
+        } else {
+          await telegram(env, "sendMessage", {
+            chat_id: chatId,
+            text: "Quiz தொடங்க /start அனுப்புங்கள்."
           });
         }
-
-        await telegram(env, "sendPoll", {
-          chat_id: chatId,
-          question: "🤖 AI வினா: " + aiData.q,
-          options: aiData.o,
-          type: "quiz",
-          correct_option_id: aiData.a,
-          explanation: aiData.e,
-          is_anonymous: false,
-          reply_markup: {
-            inline_keyboard: [[{ text: "➡️ அடுத்த AI வினா", callback_data: "ai_quiz" }]]
-          }
-        });
-      } else {
-        await telegram(env, "answerCallbackQuery", {
-          callback_query_id: callbackId,
-          text: "மற்ற பகுதிகள் விரைவில் இணைக்கப்படும்."
-        });
       }
+
+      if (update.callback_query) {
+        const callback = update.callback_query;
+        const chatId = callback.message.chat.id;
+
+        await telegram(env, "answerCallbackQuery", {
+          callback_query_id: callback.id
+        });
+
+        if (
+          callback.data === "ai_quiz" ||
+          callback.data === "next_ai"
+        ) {
+          await sendQuiz(env, chatId);
+        } else if (callback.data === "home") {
+          await telegram(env, "sendMessage", {
+            chat_id: chatId,
+            text: "மீண்டும் AI Quiz தொடங்குங்கள்.",
+            reply_markup: {
+              inline_keyboard: [
+                [{ text: "🧠 AI Quiz தொடங்கு", callback_data: "ai_quiz" }]
+              ]
+            }
+          });
+        }
+      }
+
+      return new Response("OK");
+    } catch (error) {
+      console.log("Worker error:", String(error));
+      return new Response("OK");
     }
-    return new Response("OK");
   }
 };
